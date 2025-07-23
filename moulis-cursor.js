@@ -4,8 +4,6 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 async function fetchReadme(owner, repo) {
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
     try {
@@ -160,6 +158,12 @@ async function extractCodeSummaries(tempDir) {
     let plagiarismResults = [];
     for (const file of allCodeFiles.slice(0, 10)) { // Limit to 10 files for performance
         try {
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (!apiKey) {
+                plagiarismResults.push({ file, result: "Gemini API key is missing." });
+                continue;
+            }
+            const ai = new GoogleGenAI({ apiKey });
             const code = fs.readFileSync(file, 'utf8');
             // Use Gemini to check for copied code or reused contracts
             const response = await ai.models.generateContent({
@@ -177,6 +181,12 @@ async function extractCodeSummaries(tempDir) {
 }
 
 async function describeGithubProject(repoUrl) {
+    // Instantiate Gemini AI at runtime to ensure env var is available
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        return "Gemini API key is missing. Please set GEMINI_API_KEY in your environment variables.";
+    }
+    const ai = new GoogleGenAI({ apiKey });
     // Parse owner and repo from URL
     const match = repoUrl.match(/github.com\/(.+?)\/(.+?)(?:\.|\/|$)/);
     if (!match) return "Invalid GitHub URL.";
