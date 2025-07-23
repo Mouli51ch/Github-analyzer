@@ -97,14 +97,19 @@ async function runAgent(userProblem) {
 }
 
 export async function POST(req) {
+  console.log('POST /api/agent called');
   try {
     const { userProblem } = await req.json();
+    console.log('Request body:', userProblem);
     if (!userProblem) {
+      console.warn('Missing userProblem in request');
       return Response.json({ error: "Missing userProblem" }, { status: 400 });
     }
     const result = await runAgent(userProblem);
+    console.log('runAgent result:', result);
     return Response.json({ result });
   } catch (err) {
+    console.error('Error in /api/agent:', err);
     return Response.json({ error: err.message || "Unknown error" }, { status: 500 });
   }
 }
