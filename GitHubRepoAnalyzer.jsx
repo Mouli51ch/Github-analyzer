@@ -302,10 +302,22 @@ export default function GitHubRepoAnalyzer() {
         body: JSON.stringify({ repoUrl: searchQuery })
       });
       const data = await res.json();
-      setRepoData({
-        fullName: searchQuery,
-        description: data.result || data.error || 'No data',
-      });
+      if (data.error) {
+        setRepoData({
+          fullName: searchQuery,
+          description: data.error,
+        });
+      } else if (data.result) {
+        setRepoData({
+          fullName: searchQuery,
+          ...data.result,
+        });
+      } else {
+        setRepoData({
+          fullName: searchQuery,
+          description: 'No data',
+        });
+      }
     } catch (err) {
       setRepoData({
         fullName: searchQuery,

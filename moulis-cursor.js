@@ -184,16 +184,16 @@ async function describeGithubProject(repoUrl) {
     // Instantiate Gemini AI at runtime to ensure env var is available
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        return "Gemini API key is missing. Please set GEMINI_API_KEY in your environment variables.";
+        return { error: "Gemini API key is missing. Please set GEMINI_API_KEY in your environment variables." };
     }
     const ai = new GoogleGenAI({ apiKey });
     // Parse owner and repo from URL
     const match = repoUrl.match(/github.com\/(.+?)\/(.+?)(?:\.|\/|$)/);
-    if (!match) return "Invalid GitHub URL.";
+    if (!match) return { error: "Invalid GitHub URL." };
     const owner = match[1];
     const repo = match[2];
     const readme = await fetchReadme(owner, repo);
-    if (!readme) return "Could not fetch README.md from the repository.";
+    if (!readme) return { error: "Could not fetch README.md from the repository." };
 
     // Fetch GitHub API data
     const apiBase = `https://api.github.com/repos/${owner}/${repo}`;
@@ -210,7 +210,7 @@ async function describeGithubProject(repoUrl) {
     const osTmp = process.platform === 'win32' ? process.env.TEMP : '/tmp';
     const tempDir = path.join(osTmp, `mouli-cursor-${Date.now()}`);
     if (!cloneRepo(repoUrl.replace(/\.git$/, ''), tempDir)) {
-        return "Failed to clone repository.";
+        return { error: "Failed to clone repository." };
     }
 
     // Analyze repo
@@ -242,7 +242,7 @@ async function describeGithubProject(repoUrl) {
         commits,
         plagiarismResults,
     };
-    return JSON.stringify(result);
+    return result;
 }
 
 export { describeGithubProject };
