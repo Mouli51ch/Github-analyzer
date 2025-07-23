@@ -206,11 +206,17 @@ async function describeGithubProject(repoUrl) {
         fetch(`${apiBase}/commits?per_page=5`).then(r => r.json()),
     ]);
 
-    // Clone repo to temp dir
-    const osTmp = process.platform === 'win32' ? process.env.TEMP : '/tmp';
-    const tempDir = path.join(osTmp, `mouli-cursor-${Date.now()}`);
-    if (!cloneRepo(repoUrl.replace(/\.git$/, ''), tempDir)) {
-        return { error: "Failed to clone repository." };
+    // Always use /tmp for temp dir (Vercel only allows writing to /tmp)
+    const tempDir = path.join('/tmp', `mouli-cursor-${Date.now()}`);
+    let cloneSuccess = false;
+    let cloneError = null;
+    try {
+        cloneSuccess = cloneRepo(repoUrl.replace(/\.git$/, ''), tempDir);
+    } catch (err) {
+        cloneError = err && err.message ? err.message : String(err);
+    }
+    if (!cloneSuccess) {
+        return { error: `Failed to clone repository. ${cloneError ? 'Details: ' + cloneError : ''}` };
     }
 
     // Analyze repo
